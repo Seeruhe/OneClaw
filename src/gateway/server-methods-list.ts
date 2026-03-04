@@ -97,6 +97,12 @@ const BASE_METHODS = [
   "chat.history",
   "chat.abort",
   "chat.send",
+  // Config Wizard methods
+  "configWizard.getPlatforms",
+  "configWizard.getPlatformSchema",
+  "configWizard.testConnection",
+  "configWizard.savePlatformConfig",
+  "configWizard.getServiceStatus",
 ];
 
 export function listGatewayMethods(): string[] {

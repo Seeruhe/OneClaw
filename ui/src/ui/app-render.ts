@@ -81,6 +81,9 @@ import { renderNodes } from "./views/nodes.ts";
 import { renderOverview } from "./views/overview.ts";
 import { renderSessions } from "./views/sessions.ts";
 import { renderSkills } from "./views/skills.ts";
+import { renderConfigWizard } from "./views/config-wizard/index.ts";
+import { renderServiceControl } from "./views/service-control.ts";
+import { renderDiagnostics } from "./views/diagnostics.ts";
 
 const AVATAR_DATA_RE = /^data:/i;
 const AVATAR_HTTP_RE = /^https?:\/\//i;
@@ -1114,6 +1117,75 @@ export function renderApp(state: AppViewState) {
                 onApply: () => applyConfig(state),
                 onUpdate: () => runUpdate(state),
               })
+            : nothing
+        }
+
+        ${
+          state.tab === "config-wizard"
+            ? html`
+              <div class="card">
+                <div class="card-title">Configuration Wizard</div>
+                <div class="card-sub">Easy setup for messaging platforms</div>
+                <div class="muted" style="margin-top: 24px;">
+                  The configuration wizard provides a guided setup for messaging platforms.
+                  Select a platform from the list to configure it step by step.
+                </div>
+                <div style="margin-top: 16px;">
+                  <a class="btn" href="${basePath}/channels">Go to Channels</a>
+                </div>
+              </div>
+            `
+            : nothing
+        }
+
+        ${
+          state.tab === "service-control"
+            ? html`
+              <div class="card">
+                <div class="card-title">Service Control</div>
+                <div class="card-sub">Gateway status and management</div>
+                <div class="status-grid" style="margin-top: 24px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+                  <div class="status-item" style="padding: 12px; background-color: var(--color-bg-secondary); border-radius: 8px;">
+                    <div class="muted" style="font-size: 12px;">Status</div>
+                    <div style="font-size: 18px; font-weight: 600; margin-top: 4px; color: ${state.connected ? "var(--color-success)" : "var(--color-warning)"};">
+                      ${state.connected ? "Connected" : "Disconnected"}
+                    </div>
+                  </div>
+                  <div class="status-item" style="padding: 12px; background-color: var(--color-bg-secondary); border-radius: 8px;">
+                    <div class="muted" style="font-size: 12px;">Config Valid</div>
+                    <div style="font-size: 18px; font-weight: 600; margin-top: 4px;">
+                      ${state.configValid ? "Yes" : state.configValid === false ? "No" : "N/A"}
+                    </div>
+                  </div>
+                  <div class="status-item" style="padding: 12px; background-color: var(--color-bg-secondary); border-radius: 8px;">
+                    <div class="muted" style="font-size: 12px;">Version</div>
+                    <div style="font-size: 18px; font-weight: 600; margin-top: 4px;">
+                      ${state.hello?.server?.version ?? "N/A"}
+                    </div>
+                  </div>
+                </div>
+                <div style="margin-top: 24px;">
+                  <button class="btn" ?disabled=${!state.connected} @click=${() => {}}>Refresh Status</button>
+                </div>
+              </div>
+            `
+            : nothing
+        }
+
+        ${
+          state.tab === "diagnostics"
+            ? html`
+              <div class="card">
+                <div class="card-title">Diagnostics</div>
+                <div class="card-sub">System health checks and troubleshooting</div>
+                <div class="muted" style="margin-top: 24px;">
+                  Run diagnostics to check the health of your OpenClaw installation.
+                </div>
+                <div style="margin-top: 16px;">
+                  <button class="btn" ?disabled=${!state.connected}>Run Diagnostics</button>
+                </div>
+              </div>
+            `
             : nothing
         }
 
