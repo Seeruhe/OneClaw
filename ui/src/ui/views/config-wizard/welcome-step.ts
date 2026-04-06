@@ -1,4 +1,4 @@
-import { html } from "lit";
+import { html, nothing } from "lit";
 import type { ConfigWizardProps } from "./index.ts";
 import { renderWizardNav } from "./index.ts";
 
@@ -30,8 +30,9 @@ export function renderWelcomeStep(props: ConfigWizardProps) {
             portal.
           </div>
 
-          ${state.platforms.length > 0
-            ? html`
+          ${
+            state.platforms.length > 0
+              ? html`
                 <div style="margin-top: 24px;">
                   <div class="muted">Already configured platforms:</div>
                   <div class="row" style="margin-top: 8px; gap: 8px; flex-wrap: wrap;">
@@ -47,7 +48,8 @@ export function renderWelcomeStep(props: ConfigWizardProps) {
                   </div>
                 </div>
               `
-            : nothing}
+              : nothing
+          }
         </div>
 
         ${renderWizardNav(props, { showBack: false, nextLabel: "Get Started" })}

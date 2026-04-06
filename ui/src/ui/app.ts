@@ -53,6 +53,19 @@ import {
 import type { AppViewState } from "./app-view-state.ts";
 import { normalizeAssistantIdentity } from "./assistant-identity.ts";
 import { loadAssistantIdentity as loadAssistantIdentityInternal } from "./controllers/assistant-identity.ts";
+import {
+  createInitialWizardState,
+  goBack as wizardGoBack,
+  goNext as wizardGoNext,
+  goToStep as wizardGoToStep,
+  loadPlatforms as wizardLoadPlatforms,
+  loadPlatformSchema as wizardLoadPlatformSchema,
+  savePlatformConfig as wizardSavePlatformConfig,
+  selectPlatform as wizardSelectPlatform,
+  testPlatformConnection as wizardTestConnection,
+  updatePlatformConfigValue as wizardUpdateConfigValue,
+  type ConfigWizardState,
+} from "./controllers/config-wizard.ts";
 import type { CronFieldErrors } from "./controllers/cron.ts";
 import type { DevicePairingList } from "./controllers/devices.ts";
 import type { ExecApprovalRequest } from "./controllers/exec-approval.ts";
@@ -85,6 +98,13 @@ import type {
 import { type ChatAttachment, type ChatQueueItem, type CronFormState } from "./ui-types.ts";
 import { generateUUID } from "./uuid.ts";
 import type { NostrProfileFormState } from "./views/channels.nostr-profile-form.ts";
+import { computeSummary, runDiagnostics, type DiagnosticsState } from "./views/diagnostics.ts";
+import {
+  loadServiceStatus,
+  reloadConfig as reloadServiceConfig,
+  restartGateway,
+  type ServiceControlState,
+} from "./views/service-control.ts";
 
 declare global {
   interface Window {
@@ -374,6 +394,38 @@ export class OpenClawApp extends LitElement {
   @state() logsMaxBytes = 250_000;
   @state() logsAtBottom = true;
 
+  // Config Wizard state
+  @state() configWizardState: ConfigWizardState = createInitialWizardState();
+
+  // Service Control state
+  @state() serviceControlState: ServiceControlState = {
+    client: null,
+    connected: false,
+    gatewayRunning: false,
+    gatewayPort: null,
+    gatewayUptimeMs: null,
+    gatewayVersion: null,
+    configValid: true,
+    configPath: null,
+    configLastModified: null,
+    configIssues: [],
+    restarting: false,
+    reloading: false,
+    lastError: null,
+  };
+
+  // Diagnostics state
+  @state() diagnosticsState: DiagnosticsState = {
+    client: null,
+    connected: false,
+    checks: [],
+    running: false,
+    lastRun: null,
+    summary: { total: 0, passed: 0, warnings: 0, errors: 0 },
+    filter: "all",
+    lastError: null,
+  };
+
   client: GatewayBrowserClient | null = null;
   private chatScrollFrame: number | null = null;
   private chatScrollTimeout: number | null = null;
@@ -613,6 +665,124 @@ export class OpenClawApp extends LitElement {
     const newRatio = Math.max(0.4, Math.min(0.7, ratio));
     this.splitRatio = newRatio;
     this.applySettings({ ...this.settings, splitRatio: newRatio });
+  }
+
+  // Config Wizard handlers
+  handleWizardNext() {
+    wizardGoNext(this.configWizardState);
+    this.configWizardState = { ...this.configWizardState };
+  }
+
+  handleWizardBack() {
+    wizardGoBack(this.configWizardState);
+    this.configWizardState = { ...this.configWizardState };
+  }
+
+  handleWizardGoToStep(step: ConfigWizardState["currentStep"]) {
+    wizardGoToStep(this.configWizardState, step);
+    this.configWizardState = { ...this.configWizardState };
+  }
+
+  handleWizardSelectPlatform(platformId: string) {
+    wizardSelectPlatform(this.configWizardState, platformId);
+    this.configWizardState = { ...this.configWizardState };
+  }
+
+  async handleWizardLoadPlatforms() {
+    this.configWizardState.client = this.client;
+    this.configWizardState.connected = this.connected;
+    await wizardLoadPlatforms(this.configWizardState);
+    this.configWizardState = { ...this.configWizardState };
+  }
+
+  async handleWizardLoadPlatformSchema(platformId: string) {
+    this.configWizardState.client = this.client;
+    this.configWizardState.connected = this.connected;
+    await wizardLoadPlatformSchema(this.configWizardState, platformId);
+    this.configWizardState = { ...this.configWizardState };
+  }
+
+  handleWizardConfigValueChange(platformId: string, key: string, value: unknown) {
+    wizardUpdateConfigValue(this.configWizardState, platformId, key, value);
+    this.configWizardState = { ...this.configWizardState };
+  }
+
+  async handleWizardTestConnection(platformId: string) {
+    this.configWizardState.client = this.client;
+    this.configWizardState.connected = this.connected;
+    await wizardTestConnection(this.configWizardState, platformId);
+    this.configWizardState = { ...this.configWizardState };
+  }
+
+  async handleWizardSaveConfig(platformId: string) {
+    this.configWizardState.client = this.client;
+    this.configWizardState.connected = this.connected;
+    await wizardSavePlatformConfig(this.configWizardState, platformId);
+    this.configWizardState = { ...this.configWizardState };
+  }
+
+  handleWizardDismissError() {
+    this.configWizardState.lastError = null;
+    this.configWizardState = { ...this.configWizardState };
+  }
+
+  // Service Control handlers
+  async handleServiceRestart() {
+    this.serviceControlState = { ...this.serviceControlState, restarting: true };
+    const result = await restartGateway(this.client);
+    this.serviceControlState = {
+      ...this.serviceControlState,
+      restarting: false,
+      lastError: result.error ?? null,
+    };
+  }
+
+  async handleServiceReloadConfig() {
+    this.serviceControlState = { ...this.serviceControlState, reloading: true };
+    const result = await reloadServiceConfig(this.client);
+    this.serviceControlState = {
+      ...this.serviceControlState,
+      reloading: false,
+      lastError: result.error ?? null,
+    };
+  }
+
+  async handleServiceRefresh() {
+    const status = await loadServiceStatus(this.client);
+    this.serviceControlState = {
+      ...this.serviceControlState,
+      connected: this.connected,
+      ...status,
+    };
+  }
+
+  // Diagnostics handlers
+  async handleRunDiagnostics() {
+    this.diagnosticsState = { ...this.diagnosticsState, running: true, lastError: null };
+    try {
+      const checks = await runDiagnostics(this.client);
+      this.diagnosticsState = {
+        ...this.diagnosticsState,
+        checks,
+        running: false,
+        lastRun: Date.now(),
+        summary: computeSummary(checks),
+      };
+    } catch (err) {
+      this.diagnosticsState = {
+        ...this.diagnosticsState,
+        running: false,
+        lastError: err instanceof Error ? err.message : "Diagnostics failed",
+      };
+    }
+  }
+
+  handleDiagnosticsFilterChange(filter: DiagnosticsState["filter"]) {
+    this.diagnosticsState = { ...this.diagnosticsState, filter };
+  }
+
+  handleDiagnosticsDismissError() {
+    this.diagnosticsState = { ...this.diagnosticsState, lastError: null };
   }
 
   render() {

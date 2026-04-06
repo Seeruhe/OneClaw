@@ -1,3 +1,4 @@
+import { resolveAgentWorkspaceDir, resolveDefaultAgentId } from "../../agents/agent-scope.js";
 import { listChannelPlugins } from "../../channels/plugins/index.js";
 import {
   loadConfig,
@@ -14,16 +15,15 @@ import {
   restoreRedactedValues,
 } from "../../config/redact-snapshot.js";
 import { buildConfigSchema, type ConfigSchemaResponse } from "../../config/schema.js";
-import { resolveAgentWorkspaceDir, resolveDefaultAgentId } from "../../agents/agent-scope.js";
+import { scheduleGatewaySigusr1Restart } from "../../infra/restart.js";
 import { loadOpenClawPlugins } from "../../plugins/loader.js";
 import { diffConfigPaths } from "../config-reload.js";
-import { scheduleGatewaySigusr1Restart } from "../infra/restart.js";
 import { ErrorCodes, errorShape } from "../protocol/index.js";
 import { resolveBaseHashParam } from "./base-hash.js";
-import type { GatewayRequestHandlers, RespondFn } from "./types.js";
-import { assertValidParams } from "./validation.js";
+import type { GatewayRequestHandlers } from "./types.js";
 
 // Platform configuration schema for UI forms
+// Keep in sync with ui/src/ui/controllers/config-wizard.ts
 export type PlatformFormField = {
   key: string;
   label: string;
@@ -456,7 +456,7 @@ export const configWizardHandlers: GatewayRequestHandlers = {
     }
   },
 
-  "configWizard.savePlatformConfig": async ({ params, respond, client, context }) => {
+  "configWizard.savePlatformConfig": async ({ params, respond, context }) => {
     const platformId = (params as { platformId?: unknown }).platformId;
     const config = (params as { config?: unknown }).config;
     const enabled = (params as { enabled?: unknown }).enabled;
@@ -472,11 +472,7 @@ export const configWizardHandlers: GatewayRequestHandlers = {
     }
 
     if (typeof config !== "object" || config === null) {
-      respond(
-        false,
-        undefined,
-        errorShape(ErrorCodes.INVALID_REQUEST, "config (object) required"),
-      );
+      respond(false, undefined, errorShape(ErrorCodes.INVALID_REQUEST, "config (object) required"));
       return;
     }
 
@@ -523,10 +519,7 @@ export const configWizardHandlers: GatewayRequestHandlers = {
       respond(
         false,
         undefined,
-        errorShape(
-          ErrorCodes.INVALID_REQUEST,
-          restored.humanReadableMessage ?? "Invalid config",
-        ),
+        errorShape(ErrorCodes.INVALID_REQUEST, restored.humanReadableMessage ?? "Invalid config"),
       );
       return;
     }
@@ -556,8 +549,6 @@ export const configWizardHandlers: GatewayRequestHandlers = {
       reason: "configWizard.savePlatformConfig",
       audit: {
         actor: "config-wizard",
-        deviceId: null,
-        clientIp: null,
         changedPaths,
       },
     });
@@ -584,7 +575,6 @@ export const configWizardHandlers: GatewayRequestHandlers = {
         configValid: snapshot.valid,
         configPath: snapshot.path,
         configHash: redacted.hash,
-        lastModified: snapshot.mtime,
         issues: snapshot.issues,
       },
       undefined,

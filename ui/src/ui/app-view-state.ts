@@ -1,5 +1,6 @@
 import type { EventLogEntry } from "./app-events.ts";
 import type { CompactionStatus, FallbackStatus } from "./app-tool-stream.ts";
+import type { ConfigWizardState } from "./controllers/config-wizard.ts";
 import type { CronModelSuggestionsState, CronState } from "./controllers/cron.ts";
 import type { DevicePairingList } from "./controllers/devices.ts";
 import type { ExecApprovalRequest } from "./controllers/exec-approval.ts";
@@ -32,6 +33,8 @@ import type {
 } from "./types.ts";
 import type { ChatAttachment, ChatQueueItem } from "./ui-types.ts";
 import type { NostrProfileFormState } from "./views/channels.nostr-profile-form.ts";
+import type { DiagnosticsState } from "./views/diagnostics.ts";
+import type { ServiceControlState } from "./views/service-control.ts";
 import type { SessionLogEntry } from "./views/usage.ts";
 
 export type AppViewState = {
@@ -318,4 +321,29 @@ export type AppViewState = {
     handleOpenSidebar: (content: string) => void;
     handleCloseSidebar: () => void;
     handleSplitRatioChange: (ratio: number) => void;
+
+    // Config Wizard
+    configWizardState: ConfigWizardState;
+    handleWizardNext: () => void;
+    handleWizardBack: () => void;
+    handleWizardGoToStep: (step: ConfigWizardState["currentStep"]) => void;
+    handleWizardSelectPlatform: (platformId: string) => void;
+    handleWizardLoadPlatforms: () => Promise<void>;
+    handleWizardLoadPlatformSchema: (platformId: string) => Promise<void>;
+    handleWizardConfigValueChange: (platformId: string, key: string, value: unknown) => void;
+    handleWizardTestConnection: (platformId: string) => Promise<void>;
+    handleWizardSaveConfig: (platformId: string) => Promise<void>;
+    handleWizardDismissError: () => void;
+
+    // Service Control
+    serviceControlState: ServiceControlState;
+    handleServiceRestart: () => Promise<void>;
+    handleServiceReloadConfig: () => Promise<void>;
+    handleServiceRefresh: () => Promise<void>;
+
+    // Diagnostics
+    diagnosticsState: DiagnosticsState;
+    handleRunDiagnostics: () => Promise<void>;
+    handleDiagnosticsFilterChange: (filter: DiagnosticsState["filter"]) => void;
+    handleDiagnosticsDismissError: () => void;
   };
