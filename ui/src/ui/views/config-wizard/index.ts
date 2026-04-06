@@ -1,10 +1,10 @@
 import { html, nothing } from "lit";
-import type { ConfigWizardState, PlatformInfo } from "../../controllers/config-wizard.ts";
-import { renderWelcomeStep } from "./welcome-step.ts";
-import { renderPlatformSelectStep } from "./platform-select-step.ts";
-import { renderPlatformConfigureStep } from "./platform-configure-step.ts";
-import { renderReviewStep } from "./review-step.ts";
+import type { ConfigWizardState } from "../../controllers/config-wizard.ts";
 import { renderCompleteStep } from "./complete-step.ts";
+import { renderPlatformConfigureStep } from "./platform-configure-step.ts";
+import { renderPlatformSelectStep } from "./platform-select-step.ts";
+import { renderReviewStep } from "./review-step.ts";
+import { renderWelcomeStep } from "./welcome-step.ts";
 
 export type ConfigWizardProps = {
   state: ConfigWizardState;
@@ -41,9 +41,7 @@ export function renderConfigWizard(props: ConfigWizardProps) {
   `;
 }
 
-function renderWizardHeader(props: ConfigWizardProps) {
-  const { state } = props;
-
+function renderWizardHeader(_props: ConfigWizardProps) {
   return html`
     <div class="wizard-header">
       <div class="wizard-title">OpenClaw Configuration Wizard</div>
@@ -69,18 +67,18 @@ function renderWizardSteps(props: ConfigWizardProps) {
       ${steps.map(
         (step, index) => html`
           <div
-            class="wizard-step ${index === currentIndex
-              ? "active"
-              : index < currentIndex
-                ? "completed"
-                : ""}"
+            class="wizard-step ${
+              index === currentIndex ? "active" : index < currentIndex ? "completed" : ""
+            }"
           >
             <div class="wizard-step-number">${index + 1}</div>
             <div class="wizard-step-label">${step.label}</div>
           </div>
-          ${index < steps.length - 1
-            ? html`<div class="wizard-step-connector ${index < currentIndex ? "completed" : ""}"></div>`
-            : nothing}
+          ${
+            index < steps.length - 1
+              ? html`<div class="wizard-step-connector ${index < currentIndex ? "completed" : ""}"></div>`
+              : nothing
+          }
         `,
       )}
     </div>
@@ -102,7 +100,9 @@ function renderStepContent(props: ConfigWizardProps) {
     case "complete":
       return renderCompleteStep(props);
     default:
-      return html`<div>Unknown step</div>`;
+      return html`
+        <div>Unknown step</div>
+      `;
   }
 }
 
@@ -118,20 +118,38 @@ function renderErrorBanner(message: string, onDismiss: () => void) {
 }
 
 // Shared wizard navigation buttons
-export function renderWizardNav(props: ConfigWizardProps, options: { showBack?: boolean; showNext?: boolean; nextLabel?: string; nextDisabled?: boolean; onNext?: () => void }) {
-  const { showBack = true, showNext = true, nextLabel = "Next", nextDisabled = false, onNext } = options;
+export function renderWizardNav(
+  props: ConfigWizardProps,
+  options: {
+    showBack?: boolean;
+    showNext?: boolean;
+    nextLabel?: string;
+    nextDisabled?: boolean;
+    onNext?: () => void;
+  },
+) {
+  const {
+    showBack = true,
+    showNext = true,
+    nextLabel = "Next",
+    nextDisabled = false,
+    onNext,
+  } = options;
 
   return html`
     <div class="wizard-nav" style="margin-top: 24px;">
       <div class="row" style="justify-content: space-between;">
         <div>
-          ${showBack
-            ? html`<button class="btn btn-secondary" @click=${props.onBack}>Back</button>`
-            : nothing}
+          ${
+            showBack
+              ? html`<button class="btn btn-secondary" @click=${props.onBack}>Back</button>`
+              : nothing
+          }
         </div>
         <div>
-          ${showNext
-            ? html`
+          ${
+            showNext
+              ? html`
                 <button
                   class="btn"
                   ?disabled=${nextDisabled || props.state.saving}
@@ -140,7 +158,8 @@ export function renderWizardNav(props: ConfigWizardProps, options: { showBack?: 
                   ${props.state.saving ? "Saving..." : nextLabel}
                 </button>
               `
-            : nothing}
+              : nothing
+          }
         </div>
       </div>
     </div>

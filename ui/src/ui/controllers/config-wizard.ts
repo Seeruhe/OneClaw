@@ -9,6 +9,7 @@ export type WizardStep =
   | "complete";
 
 // Platform info from backend
+// Keep in sync with src/gateway/server-methods/config-wizard.ts
 export type PlatformInfo = {
   id: string;
   label: string;
@@ -316,6 +317,10 @@ export async function loadServiceStatus(state: ConfigWizardState): Promise<void>
 // Navigation helpers
 export function goToStep(state: ConfigWizardState, step: WizardStep): void {
   state.currentStep = step;
+  // Trigger platform loading when entering the select step
+  if (step === "platform-select" && state.platforms.length === 0 && !state.platformsLoading) {
+    void loadPlatforms(state);
+  }
 }
 
 export function selectPlatform(state: ConfigWizardState, platformId: string): void {
@@ -345,6 +350,10 @@ export function goNext(state: ConfigWizardState): void {
   switch (state.currentStep) {
     case "welcome":
       state.currentStep = "platform-select";
+      // Trigger platform loading when entering the select step
+      if (state.platforms.length === 0 && !state.platformsLoading) {
+        void loadPlatforms(state);
+      }
       break;
     case "platform-select":
       if (state.selectedPlatformId) {

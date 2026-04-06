@@ -1,5 +1,6 @@
 import { html, nothing } from "lit";
-import type { ConfigWizardProps, PlatformFormField, PlatformConfigState } from "../../controllers/config-wizard.ts";
+import type { PlatformFormField, PlatformConfigState } from "../../controllers/config-wizard.ts";
+import type { ConfigWizardProps } from "./index.ts";
 import { renderWizardNav } from "./index.ts";
 
 export function renderPlatformConfigureStep(props: ConfigWizardProps) {
@@ -40,9 +41,13 @@ export function renderPlatformConfigureStep(props: ConfigWizardProps) {
             <div class="card-title">${platform?.label ?? platformId} Configuration</div>
             <div class="card-sub">${platform?.description ?? ""}</div>
           </div>
-          ${platform?.enabled
-            ? html`<span class="badge badge-success">Currently Enabled</span>`
-            : nothing}
+          ${
+            platform?.enabled
+              ? html`
+                  <span class="badge badge-success">Currently Enabled</span>
+                `
+              : nothing
+          }
         </div>
 
         <!-- Platform tabs for quick switching -->
@@ -77,7 +82,9 @@ export function renderPlatformConfigureStep(props: ConfigWizardProps) {
 function renderConfigForm(props: ConfigWizardProps, config: PlatformConfigState) {
   const schema = config.schema;
   if (!schema) {
-    return html`<div class="muted">No configuration available</div>`;
+    return html`
+      <div class="muted">No configuration available</div>
+    `;
   }
 
   return html`
@@ -87,10 +94,14 @@ function renderConfigForm(props: ConfigWizardProps, config: PlatformConfigState)
         <label class="field" style="display: flex; align-items: center; gap: 12px;">
           <input
             type="checkbox"
-            ?checked=${config.values[`${schema.enabledKey}`] !== false}
+            ?checked=${config.values[schema.enabledKey] !== false}
             @change=${(e: Event) => {
               const checked = (e.target as HTMLInputElement).checked;
-              props.onConfigValueChange(props.state.selectedPlatformId!, schema.enabledKey, checked);
+              props.onConfigValueChange(
+                props.state.selectedPlatformId!,
+                schema.enabledKey,
+                checked,
+              );
             }}
           />
           <span>Enable ${schema.label}</span>
@@ -103,8 +114,9 @@ function renderConfigForm(props: ConfigWizardProps, config: PlatformConfigState)
       </div>
 
       <!-- Advanced fields (collapsible) -->
-      ${schema.advancedFields && schema.advancedFields.length > 0
-        ? html`
+      ${
+        schema.advancedFields && schema.advancedFields.length > 0
+          ? html`
             <details class="advanced-section" style="margin-top: 16px;">
               <summary style="cursor: pointer; color: var(--color-primary);">Show Advanced Options</summary>
               <div class="form-fields" style="margin-top: 12px;">
@@ -112,7 +124,8 @@ function renderConfigForm(props: ConfigWizardProps, config: PlatformConfigState)
               </div>
             </details>
           `
-        : nothing}
+          : nothing
+      }
 
       <!-- Connection test -->
       <div class="test-connection" style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--color-border);">
@@ -131,7 +144,11 @@ function renderConfigForm(props: ConfigWizardProps, config: PlatformConfigState)
   `;
 }
 
-function renderFormField(props: ConfigWizardProps, config: PlatformConfigState, field: PlatformFormField) {
+function renderFormField(
+  props: ConfigWizardProps,
+  config: PlatformConfigState,
+  field: PlatformFormField,
+) {
   const value = config.values[field.key] ?? field.defaultValue ?? "";
   const platformId = props.state.selectedPlatformId!;
 
@@ -159,7 +176,13 @@ function renderFormField(props: ConfigWizardProps, config: PlatformConfigState, 
       <label class="field">
         <span class="field-label">
           ${field.label}
-          ${field.required ? html`<span class="required" style="color: var(--color-danger);">*</span>` : nothing}
+          ${
+            field.required
+              ? html`
+                  <span class="required" style="color: var(--color-danger)">*</span>
+                `
+              : nothing
+          }
         </span>
         ${renderFieldInput(field, value, onChange)}
         ${field.helpText ? html`<span class="field-help muted" style="font-size: 12px; margin-top: 4px;">${field.helpText}</span>` : nothing}
@@ -168,13 +191,26 @@ function renderFormField(props: ConfigWizardProps, config: PlatformConfigState, 
   `;
 }
 
+function stringifyValue(value: unknown): string {
+  if (value == null) {
+    return "";
+  }
+  if (typeof value === "string") {
+    return value;
+  }
+  if (typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+  return JSON.stringify(value);
+}
+
 function renderFieldInput(field: PlatformFormField, value: unknown, onChange: (e: Event) => void) {
   switch (field.type) {
     case "text":
       return html`
         <input
           type="text"
-          .value=${String(value ?? "")}
+          .value=${stringifyValue(value)}
           .placeholder=${field.placeholder ?? ""}
           @input=${onChange}
         />
@@ -184,7 +220,7 @@ function renderFieldInput(field: PlatformFormField, value: unknown, onChange: (e
       return html`
         <input
           type="password"
-          .value=${String(value ?? "")}
+          .value=${stringifyValue(value)}
           .placeholder=${field.placeholder ?? ""}
           @input=${onChange}
           autocomplete="off"
@@ -195,7 +231,7 @@ function renderFieldInput(field: PlatformFormField, value: unknown, onChange: (e
       return html`
         <input
           type="number"
-          .value=${String(value ?? "")}
+          .value=${stringifyValue(value)}
           .placeholder=${field.placeholder ?? ""}
           @input=${onChange}
         />
@@ -212,10 +248,10 @@ function renderFieldInput(field: PlatformFormField, value: unknown, onChange: (e
 
     case "select":
       return html`
-        <select .value=${String(value ?? "")} @change=${onChange}>
+        <select .value=${stringifyValue(value)} @change=${onChange}>
           ${field.options?.map(
             (opt) => html`
-              <option value=${opt.value} ?selected=${String(value) === opt.value}>
+              <option value=${opt.value} ?selected=${stringifyValue(value) === opt.value}>
                 ${opt.label}
               </option>
             `,
@@ -226,7 +262,7 @@ function renderFieldInput(field: PlatformFormField, value: unknown, onChange: (e
     case "textarea":
       return html`
         <textarea
-          .value=${String(value ?? "")}
+          .value=${stringifyValue(value)}
           .placeholder=${field.placeholder ?? ""}
           @input=${onChange}
           rows="3"
@@ -237,7 +273,7 @@ function renderFieldInput(field: PlatformFormField, value: unknown, onChange: (e
       return html`
         <input
           type="text"
-          .value=${String(value ?? "")}
+          .value=${stringifyValue(value)}
           .placeholder=${field.placeholder ?? ""}
           @input=${onChange}
         />

@@ -49,9 +49,8 @@ export type DiagnosticsProps = {
 export function renderDiagnostics(props: DiagnosticsProps) {
   const { state } = props;
 
-  const filteredChecks = state.filter === "all"
-    ? state.checks
-    : state.checks.filter((c) => c.status === state.filter);
+  const filteredChecks =
+    state.filter === "all" ? state.checks : state.checks.filter((c) => c.status === state.filter);
 
   return html`
     <section class="diagnostics">
@@ -69,13 +68,15 @@ export function renderDiagnostics(props: DiagnosticsProps) {
             ${renderSummaryStat("Errors", state.summary.errors, "error")}
           </div>
 
-          ${state.lastRun
-            ? html`
+          ${
+            state.lastRun
+              ? html`
                 <div class="muted" style="margin-top: 12px; font-size: 12px;">
                   Last run: ${formatRelativeTimestamp(state.lastRun)}
                 </div>
               `
-            : nothing}
+              : nothing
+          }
         </div>
 
         <!-- Controls -->
@@ -103,8 +104,9 @@ export function renderDiagnostics(props: DiagnosticsProps) {
           </div>
         </div>
 
-        ${state.lastError
-          ? html`
+        ${
+          state.lastError
+            ? html`
               <div class="callout danger" style="margin-top: 16px;">
                 <div class="row" style="justify-content: space-between; align-items: center;">
                   <span>${state.lastError}</span>
@@ -112,30 +114,33 @@ export function renderDiagnostics(props: DiagnosticsProps) {
                 </div>
               </div>
             `
-          : nothing}
+            : nothing
+        }
       </div>
 
       <!-- Results -->
       <div class="diagnostics-results" style="margin-top: 18px;">
-        ${state.checks.length === 0 && !state.running
-          ? html`
-              <div class="card">
-                <div class="muted" style="text-align: center; padding: 32px;">
-                  Click "Run Diagnostics" to check system health
+        ${
+          state.checks.length === 0 && !state.running
+            ? html`
+                <div class="card">
+                  <div class="muted" style="text-align: center; padding: 32px">
+                    Click "Run Diagnostics" to check system health
+                  </div>
                 </div>
-              </div>
-            `
-          : nothing}
+              `
+            : nothing
+        }
 
-        ${state.running && state.checks.length === 0
-          ? html`
-              <div class="card">
-                <div class="muted" style="text-align: center; padding: 32px;">
-                  Running diagnostics...
+        ${
+          state.running && state.checks.length === 0
+            ? html`
+                <div class="card">
+                  <div class="muted" style="text-align: center; padding: 32px">Running diagnostics...</div>
                 </div>
-              </div>
-            `
-          : nothing}
+              `
+            : nothing
+        }
 
         <!-- Group by category -->
         ${renderCheckCategory(props, "config", "Configuration", filteredChecks)}
@@ -147,7 +152,11 @@ export function renderDiagnostics(props: DiagnosticsProps) {
   `;
 }
 
-function renderSummaryStat(label: string, value: number, status: "success" | "warning" | "error" | null) {
+function renderSummaryStat(
+  label: string,
+  value: number,
+  status: "success" | "warning" | "error" | null,
+) {
   return html`
     <div
       class="summary-stat"
@@ -206,11 +215,11 @@ function renderCheckItem(check: DiagnosticCheck) {
   };
 
   const statusIcons = {
-    ok: "&#10003;",
-    warning: "&#9888;",
-    error: "&#10007;",
-    pending: "&#8987;",
-    skipped: "&#8212;",
+    ok: "\u2713",
+    warning: "\u26A0",
+    error: "\u2717",
+    pending: "\u231B",
+    skipped: "\u2014",
   };
 
   return html`
@@ -228,15 +237,22 @@ function renderCheckItem(check: DiagnosticCheck) {
         <div>
           <div class="check-name" style="font-weight: 600;">
             <span class="status-icon" style="margin-right: 8px;">
-              ${check.status === "pending" ? html`<span class="spinner"></span>` : nothing}
+              ${
+                check.status === "pending"
+                  ? html`
+                      <span class="spinner"></span>
+                    `
+                  : nothing
+              }
             </span>
             ${check.name}
           </div>
           <div class="check-message" style="margin-top: 4px; font-size: 13px;">
             ${check.message}
           </div>
-          ${check.suggestion
-            ? html`
+          ${
+            check.suggestion
+              ? html`
                 <div
                   class="check-suggestion"
                   style="
@@ -250,7 +266,8 @@ function renderCheckItem(check: DiagnosticCheck) {
                   <strong>Suggestion:</strong> ${check.suggestion}
                 </div>
               `
-            : nothing}
+              : nothing
+          }
         </div>
         <div
           class="check-status"
@@ -263,8 +280,9 @@ function renderCheckItem(check: DiagnosticCheck) {
         </div>
       </div>
 
-      ${check.details && Object.keys(check.details).length > 0
-        ? html`
+      ${
+        check.details && Object.keys(check.details).length > 0
+          ? html`
             <details style="margin-top: 8px;">
               <summary style="cursor: pointer; font-size: 12px; color: var(--color-primary);">
                 Show details
@@ -280,7 +298,8 @@ function renderCheckItem(check: DiagnosticCheck) {
               >${JSON.stringify(check.details, null, 2)}</pre>
             </details>
           `
-        : nothing}
+          : nothing
+      }
     </div>
   `;
 }
@@ -311,9 +330,7 @@ export async function runDiagnostics(
         ? "Configuration is valid"
         : `Configuration has ${configStatus.issues?.length ?? 0} issues`,
       details: { issues: configStatus.issues },
-      suggestion: configStatus.valid
-        ? undefined
-        : "Fix configuration errors and reload",
+      suggestion: configStatus.valid ? undefined : "Fix configuration errors and reload",
     });
   } catch (err) {
     checks.push({
@@ -328,7 +345,10 @@ export async function runDiagnostics(
   // 2. Channel status
   try {
     const channelsStatus = await client.request<{
-      channels?: Record<string, { configured?: boolean; running?: boolean; connected?: boolean; lastError?: string }>;
+      channels?: Record<
+        string,
+        { configured?: boolean; running?: boolean; connected?: boolean; lastError?: string }
+      >;
     }>("channels.status", {});
 
     const channels = channelsStatus.channels ?? {};
@@ -343,10 +363,8 @@ export async function runDiagnostics(
             ? "Connected and running"
             : status.running
               ? "Running but not connected"
-              : status.lastError ?? "Not connected",
-          suggestion: status.lastError
-            ? "Check channel configuration and credentials"
-            : undefined,
+              : (status.lastError ?? "Not connected"),
+          suggestion: status.lastError ? "Check channel configuration and credentials" : undefined,
         });
       }
     }
@@ -370,7 +388,7 @@ export async function runDiagnostics(
       status: "ok",
       message: "Secrets store is accessible",
     });
-  } catch (err) {
+  } catch {
     checks.push({
       id: "secrets",
       name: "Secrets Store",
@@ -387,9 +405,10 @@ export async function runDiagnostics(
       memory?: { heapUsed?: number; heapTotal?: number };
     }>("health", {});
 
-    const memoryUsage = health.memory?.heapUsed && health.memory?.heapTotal
-      ? Math.round((health.memory.heapUsed / health.memory.heapTotal) * 100)
-      : null;
+    const memoryUsage =
+      health.memory?.heapUsed && health.memory?.heapTotal
+        ? Math.round((health.memory.heapUsed / health.memory.heapTotal) * 100)
+        : null;
 
     checks.push({
       id: "health",

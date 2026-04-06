@@ -35,20 +35,22 @@ export function renderCompleteStep(props: ConfigWizardProps) {
             &#10003;
           </div>
 
-          ${testResult?.success
-            ? html`
+          ${
+            testResult?.success
+              ? html`
                 <p class="success-message">
                   Your ${platform?.label ?? "platform"} is configured and the connection test passed.
                 </p>
               `
-            : html`
+              : html`
                 <p>
                   Your ${platform?.label ?? "platform"} configuration has been saved.
-                  ${!testResult
-                    ? "Consider running a connection test to verify your settings."
-                    : ""}
+                  ${
+                    !testResult ? "Consider running a connection test to verify your settings." : ""
+                  }
                 </p>
-              `}
+              `
+          }
 
           <div class="callout" style="margin-top: 24px; text-align: left;">
             <strong>Next steps:</strong>
@@ -103,11 +105,19 @@ export function renderCompleteStep(props: ConfigWizardProps) {
                     >
                       <span>${p.label}</span>
                       <span>
-                        ${p.enabled
-                          ? html`<span class="badge badge-success" style="font-size: 11px;">Enabled</span>`
-                          : p.configured
-                            ? html`<span class="badge badge-muted" style="font-size: 11px;">Configured</span>`
-                            : html`<span class="muted">Not configured</span>`}
+                        ${
+                          p.enabled
+                            ? html`
+                                <span class="badge badge-success" style="font-size: 11px">Enabled</span>
+                              `
+                            : p.configured
+                              ? html`
+                                  <span class="badge badge-muted" style="font-size: 11px">Configured</span>
+                                `
+                              : html`
+                                  <span class="muted">Not configured</span>
+                                `
+                        }
                       </span>
                     </div>
                   `,
