@@ -51,21 +51,13 @@ export function renderServiceControl(props: ServiceControlProps) {
             state.connected && state.gatewayRunning ? "Running" : "Stopped",
             state.connected && state.gatewayRunning ? "success" : "warning",
           )}
-          ${renderStatusItem(
-            "Port",
-            state.gatewayPort?.toString() ?? "N/A",
-            null,
-          )}
+          ${renderStatusItem("Port", state.gatewayPort?.toString() ?? "N/A", null)}
           ${renderStatusItem(
             "Uptime",
             state.gatewayUptimeMs ? formatDurationHuman(state.gatewayUptimeMs) : "N/A",
             null,
           )}
-          ${renderStatusItem(
-            "Version",
-            state.gatewayVersion ?? "N/A",
-            null,
-          )}
+          ${renderStatusItem("Version", state.gatewayVersion ?? "N/A", null)}
         </div>
 
         <!-- Control buttons -->
@@ -86,13 +78,15 @@ export function renderServiceControl(props: ServiceControlProps) {
           </button>
         </div>
 
-        ${state.lastError
-          ? html`
+        ${
+          state.lastError
+            ? html`
               <div class="callout danger" style="margin-top: 16px;">
                 ${state.lastError}
               </div>
             `
-          : nothing}
+            : nothing
+        }
       </div>
 
       <!-- Configuration Status Card -->
@@ -106,23 +100,32 @@ export function renderServiceControl(props: ServiceControlProps) {
               <div class="config-path" style="font-family: monospace; font-size: 13px;">
                 ${state.configPath ?? "Not loaded"}
               </div>
-              ${state.configLastModified
-                ? html`
+              ${
+                state.configLastModified
+                  ? html`
                     <div class="muted" style="font-size: 12px; margin-top: 4px;">
                       Last modified: ${formatRelativeTimestamp(state.configLastModified)}
                     </div>
                   `
-                : nothing}
+                  : nothing
+              }
             </div>
             <div>
-              ${state.configValid
-                ? html`<span class="badge badge-success">Valid</span>`
-                : html`<span class="badge badge-danger">Invalid</span>`}
+              ${
+                state.configValid
+                  ? html`
+                      <span class="badge badge-success">Valid</span>
+                    `
+                  : html`
+                      <span class="badge badge-danger">Invalid</span>
+                    `
+              }
             </div>
           </div>
 
-          ${state.configIssues.length > 0
-            ? html`
+          ${
+            state.configIssues.length > 0
+              ? html`
                 <div class="config-issues" style="margin-top: 16px;">
                   <div style="font-weight: 600; margin-bottom: 8px;">Issues:</div>
                   <div class="issues-list" style="font-size: 13px;">
@@ -144,7 +147,8 @@ export function renderServiceControl(props: ServiceControlProps) {
                   </div>
                 </div>
               `
-            : nothing}
+              : nothing
+          }
         </div>
 
         <!-- Reload config button -->
@@ -206,7 +210,11 @@ export function renderServiceControl(props: ServiceControlProps) {
   `;
 }
 
-function renderStatusItem(label: string, value: string, status: "success" | "warning" | "error" | null) {
+function renderStatusItem(
+  label: string,
+  value: string,
+  status: "success" | "warning" | "error" | null,
+) {
   return html`
     <div class="status-item" style="padding: 12px; background-color: var(--color-bg-secondary); border-radius: 8px;">
       <div class="status-label muted" style="font-size: 12px;">${label}</div>

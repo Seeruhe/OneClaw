@@ -50,9 +50,15 @@ export function renderReviewStep(props: ConfigWizardProps) {
             <div class="review-item">
               <span class="label">Status:</span>
               <span>
-                ${config.values[`${config.schema!.enabledKey}`] !== false
-                  ? html`<span class="badge badge-success">Will be enabled</span>`
-                  : html`<span class="badge badge-muted">Will be disabled</span>`}
+                ${
+                  config.values[config.schema.enabledKey] !== false
+                    ? html`
+                        <span class="badge badge-success">Will be enabled</span>
+                      `
+                    : html`
+                        <span class="badge badge-muted">Will be disabled</span>
+                      `
+                }
               </span>
             </div>
           </div>
@@ -62,15 +68,18 @@ export function renderReviewStep(props: ConfigWizardProps) {
             <div class="review-section-title" style="font-weight: 600; margin-bottom: 12px;">
               Configuration
             </div>
-            ${renderConfigValues(config.schema!.fields, config.values)}
-            ${config.schema!.advancedFields
-              ? renderConfigValues(config.schema!.advancedFields, config.values, true)
-              : nothing}
+            ${renderConfigValues(config.schema.fields, config.values)}
+            ${
+              config.schema.advancedFields
+                ? renderConfigValues(config.schema.advancedFields, config.values, true)
+                : nothing
+            }
           </div>
 
           <!-- Connection test result -->
-          ${config.testResult
-            ? html`
+          ${
+            config.testResult
+              ? html`
                 <div class="review-section" style="margin-top: 24px;">
                   <div class="review-section-title" style="font-weight: 600; margin-bottom: 12px;">
                     Connection Test
@@ -80,20 +89,23 @@ export function renderReviewStep(props: ConfigWizardProps) {
                     style="
                       padding: 12px;
                       border-radius: 4px;
-                      background-color: ${config.testResult.success
-                        ? "var(--color-success-bg, #e8f5e9)"
-                        : "var(--color-error-bg, #ffebee)"};
+                      background-color: ${
+                        config.testResult.success
+                          ? "var(--color-success-bg, #e8f5e9)"
+                          : "var(--color-error-bg, #ffebee)"
+                      };
                     "
                   >
                     ${config.testResult.message}
                   </div>
                 </div>
               `
-            : html`
-                <div class="callout warning" style="margin-top: 24px;">
-                  Connection test not run. Consider testing before saving.
-                </div>
-              `}
+              : html`
+                  <div class="callout warning" style="margin-top: 24px">
+                    Connection test not run. Consider testing before saving.
+                  </div>
+                `
+          }
         </div>
 
         <!-- Save/Apply -->
@@ -109,11 +121,13 @@ export function renderReviewStep(props: ConfigWizardProps) {
             >
               ${state.saving ? "Saving..." : "Save Configuration"}
             </button>
-            ${state.saveError
-              ? html`
+            ${
+              state.saveError
+                ? html`
                   <span class="error" style="color: var(--color-danger);">${state.saveError}</span>
                 `
-              : nothing}
+                : nothing
+            }
           </div>
           <div class="muted" style="margin-top: 8px; font-size: 12px;">
             Saving will update your configuration file and restart the gateway.
@@ -143,7 +157,13 @@ function renderConfigValues(
 
   return html`
     <div class="config-values ${isAdvanced ? "advanced" : ""}" style="margin-top: ${isAdvanced ? "12px" : "0"};">
-      ${isAdvanced ? html`<div class="muted" style="margin-bottom: 8px;">Advanced Options:</div>` : nothing}
+      ${
+        isAdvanced
+          ? html`
+              <div class="muted" style="margin-bottom: 8px">Advanced Options:</div>
+            `
+          : nothing
+      }
       ${visibleFields.map(
         (field) => html`
           <div class="review-item" style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--color-border-light);">
@@ -156,13 +176,28 @@ function renderConfigValues(
   `;
 }
 
+function safeString(value: unknown): string {
+  if (value == null) {
+    return "";
+  }
+  if (typeof value === "string") {
+    return value;
+  }
+  if (typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+  return JSON.stringify(value);
+}
+
 function renderValue(value: unknown, type?: string): unknown {
   if (value === undefined || value === null) {
-    return html`<span class="muted">Not set</span>`;
+    return html`
+      <span class="muted">Not set</span>
+    `;
   }
 
   if (type === "password") {
-    const str = String(value);
+    const str = safeString(value);
     const masked = str.length > 8 ? str.slice(0, 4) + "****" + str.slice(-4) : "****";
     return html`<code class="mono">${masked}</code>`;
   }
@@ -175,5 +210,5 @@ function renderValue(value: unknown, type?: string): unknown {
     return html`<code class="mono">${JSON.stringify(value)}</code>`;
   }
 
-  return html`<code class="mono">${String(value)}</code>`;
+  return html`<code class="mono">${safeString(value)}</code>`;
 }
